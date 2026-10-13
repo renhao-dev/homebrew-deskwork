@@ -3,9 +3,9 @@
 class Deskwork < Formula
   desc "Goals, tasks, notes and a wiki, encrypted on your Mac"
   homepage "https://github.com/renhao-dev/deskwork"
-  url "https://github.com/renhao-dev/deskwork/releases/download/v0.1.1/deskwork-0.1.1.tar.gz"
-  sha256 "c9facfbc62a9d1468d3e836d9e6d423d45f111903fa6c7f93ab3b7241fbee32f"
-  version "0.1.1"
+  url "https://github.com/renhao-dev/deskwork/releases/download/v0.1.2/deskwork-0.1.2.tar.gz"
+  sha256 "9b8e7999bb6a1b891894e4930071e4fa9ad6579ada6a962d2fb8f9341a455be5"
+  version "0.1.2"
 
   depends_on :macos
   depends_on "node"
@@ -22,8 +22,11 @@ class Deskwork < Formula
       # Runs the Deskwork server. Normally started for you by: brew services start deskwork
       export DATA_DIR="${DATA_DIR:-$HOME/Library/Application Support/Deskwork/data}"
       mkdir -p "$DATA_DIR"
-      # Puts Deskwork in Launchpad (~/Applications/Deskwork.app) if it isn't there yet.
-      DESKWORK_BREW="#{HOMEBREW_PREFIX}/bin/brew" "#{libexec}/packaging/mac-launcher.sh" || true
+      # For the Update button: where brew is, and where the installed Deskwork is after an upgrade.
+      export DESKWORK_BREW="#{HOMEBREW_PREFIX}/bin/brew"
+      export DESKWORK_OPT="#{opt_libexec}"
+      # Puts "Deskwork(chrome tab)" in Launchpad (in ~/Applications) if it isn't there yet.
+      "#{libexec}/packaging/mac-launcher.sh" || true
       cd "#{libexec}"
       exec "#{Formula["node"].opt_bin}/node" --no-warnings=ExperimentalWarning "#{libexec}/server/index.ts" "$@"
     SH
@@ -42,14 +45,14 @@ class Deskwork < Formula
       Start Deskwork now and every time you log in:
         brew services start deskwork
 
-      That puts Deskwork in Launchpad. Open it there (or go to http://localhost:5174
-      in Chrome), make your account, and click "Install app" in the top bar to give
-      Deskwork its own window and Dock icon.
+      That puts "Deskwork(chrome tab)" in Launchpad. Open it there (or go to
+      http://localhost:5174 in Chrome), make your account, and click "Install app"
+      in the top bar to give Deskwork its own window and Dock icon.
 
       Your data lives in ~/Library/Application Support/Deskwork/data and is encrypted
       with your password. There is no way to reset it, so keep the password safe.
       `brew uninstall deskwork` leaves the data in place, and the Launchpad icon:
-      drag ~/Applications/Deskwork.app to the Trash to remove it.
+      drag "Deskwork(chrome tab)" from ~/Applications to the Trash to remove it.
     EOS
   end
 
@@ -66,8 +69,9 @@ class Deskwork < Formula
       assert_match "\"version\":\"#{version}\"", shell_output("curl -fsS http://127.0.0.1:#{port}/api/health")
       assert_match "\"needed\":true", shell_output("curl -fsS http://127.0.0.1:#{port}/api/auth/setup")
       # Starting the server is what puts the icon in Launchpad.
-      assert_path_exists testpath/"Applications/Deskwork.app/Contents/MacOS/Deskwork"
-      assert_path_exists testpath/"Applications/Deskwork.app/Contents/Resources/Deskwork.icns"
+      launcher = testpath/"Applications/Deskwork(chrome tab).app"
+      assert_path_exists launcher/"Contents/MacOS/Deskwork"
+      assert_path_exists launcher/"Contents/Resources/Deskwork.icns"
     ensure
       Process.kill("TERM", pid)
       Process.wait(pid)
